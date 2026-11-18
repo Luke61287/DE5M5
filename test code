@@ -431,5 +431,43 @@ class TestLibraryBooksCleaning(unittest.TestCase):
 
         self.assertEqual(duplicates, 0)
 
+    def test_data_quality_report(self):
+
+        print("\n")
+        print("=" * 80)
+        print("BOOKS DATA QUALITY REPORT")
+        print("=" * 80)
+    
+        for issue in self.book_dq_before:
+    
+            before = self.book_dq_before[issue]
+            after = self.book_dq_after[issue]
+    
+            print(
+                f"{issue}: "
+                f"Before={before}, "
+                f"After={after}, "
+                f"Resolved={before-after}"
+            )
+    
+        print("\n")
+        print("=" * 80)
+        print("CUSTOMERS DATA QUALITY REPORT")
+        print("=" * 80)
+    
+        for issue in self.customer_dq_before:
+    
+            before = self.customer_dq_before[issue]
+            after = self.customer_dq_after[issue]
+    
+            print(
+                f"{issue}: "
+                f"Before={before}, "
+                f"After={after}, "
+                f"Resolved={before-after}"
+            )
+    
+        self.assertTrue(True)
+
 if __name__ == "__main__":
     unittest.main()
