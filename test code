@@ -283,19 +283,6 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         }
 
         cls.customer_dq_after = {
-            cls.standardised_customer_names = len(
-                cls.customers_df[
-                    cls.customers_df["Customer Name"]
-                    ==
-                    cls.customers_df["Customer Name"].str.title()
-                ]
-            )
-            
-            cls.integer_customer_ids = (
-                pd.api.types.is_integer_dtype(
-                    cls.customers_df["Customer ID"]
-                )
-            )
 
             "blank_rows":
                 cls.customers_df.isna().all(axis=1).sum(),
@@ -323,6 +310,20 @@ class TestLibraryBooksCleaning(unittest.TestCase):
                     .sum()
                 )
         }
+
+        cls.standardised_customer_names = len(
+                cls.customers_df[
+                    cls.customers_df["Customer Name"]
+                    ==
+                    cls.customers_df["Customer Name"].str.title()
+                ]
+            )
+            
+        cls.integer_customer_ids = (
+                pd.api.types.is_integer_dtype(
+                    cls.customers_df["Customer ID"]
+                )
+            )
 
     # -----------------------------------------
     # BOOKS TESTS
