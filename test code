@@ -165,6 +165,54 @@ class TestLibraryBooksCleaning(unittest.TestCase):
             - cls.books_df["Book checkout"]
         ).dt.days
 
+        # Additional DQ metrics
+    
+        cls.invalid_checkout_dates = (
+            cls.books_df["Book checkout"]
+            .isna()
+            .sum()
+        )
+        
+        cls.future_year_records = (
+            cls.books_df["Book checkout"]
+            .dropna()
+            .dt.year
+            .gt(2026)
+            .sum()
+        )
+        
+        cls.returned_before_checkout = len(
+            cls.books_df[
+                cls.books_df["Book Returned"]
+                <
+                cls.books_df["Book checkout"]
+            ]
+        )
+        
+        cls.borrow_period_violations = len(
+            cls.books_df[
+                cls.books_df["Borrow_Days"] > 14
+            ]
+        )
+        
+        cls.negative_borrow_days = len(
+            cls.books_df[
+                cls.books_df["Borrow_Days"] < 0
+            ]
+        )
+        
+        cls.unknown_books = (
+            cls.books_df["Books"]
+            .eq("Unknown")
+            .sum()
+        )
+        
+        cls.replaced_customer_ids = (
+            cls.books_df["Customer ID"]
+            .eq(-1)
+            .sum()
+        )
+
         # Customer dataset cleaning
 
         cls.customers_df = cls.customers_df.dropna(how="all")
@@ -235,6 +283,19 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         }
 
         cls.customer_dq_after = {
+            cls.standardised_customer_names = len(
+                cls.customers_df[
+                    cls.customers_df["Customer Name"]
+                    ==
+                    cls.customers_df["Customer Name"].str.title()
+                ]
+            )
+            
+            cls.integer_customer_ids = (
+                pd.api.types.is_integer_dtype(
+                    cls.customers_df["Customer ID"]
+                )
+            )
 
             "blank_rows":
                 cls.customers_df.isna().all(axis=1).sum(),
@@ -439,6 +500,44 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         print("=" * 80)
     
         for issue in self.book_dq_before:
+            print("\n")
+            print("BOOKS BUSINESS RULE CHECKS")
+            print("-" * 80)
+            
+            print(
+                f"Invalid Checkout Dates Found: "
+                f"{self.invalid_checkout_dates}"
+            )
+            
+            print(
+                f"Future Year Records Remaining: "
+                f"{self.future_year_records}"
+            )
+            
+            print(
+                f"Returned Before Checkout: "
+                f"{self.returned_before_checkout}"
+            )
+            
+            print(
+                f"Borrow Period Violations (>14 Days): "
+                f"{self.borrow_period_violations}"
+            )
+            
+            print(
+                f"Negative Borrow Days: "
+                f"{self.negative_borrow_days}"
+            )
+            
+            print(
+                f"Unknown Books Created: "
+                f"{self.unknown_books}"
+            )
+            
+            print(
+                f"Customer IDs Replaced With -1: "
+                f"{self.replaced_customer_ids}"
+            )
     
             before = self.book_dq_before[issue]
             after = self.book_dq_after[issue]
@@ -468,6 +567,20 @@ class TestLibraryBooksCleaning(unittest.TestCase):
             )
     
         self.assertTrue(True)
+
+        print("\n")
+        print("CUSTOMER BUSINESS RULE CHECKS")
+        print("-" * 80)
+        
+        print(
+            f"Names Standardised: "
+            f"{self.standardised_customer_names}"
+        )
+        
+        print(
+            f"Customer IDs Integer Datatype: "
+            f"{self.integer_customer_ids}"
+        )
 
 if __name__ == "__main__":
     unittest.main()
