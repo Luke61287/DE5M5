@@ -13,16 +13,16 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         cls.book_dq_before = {
 
             "blank_rows":
-                cls.raw_books_df.isna().all(axis=1).sum(),
+                cls.books_df.isna().all(axis=1).sum(),
         
             "missing_books":
-                cls.raw_books_df["Books"].isna().sum(),
+                cls.books_df["Books"].isna().sum(),
         
             "missing_customer_ids":
-                cls.raw_books_df["Customer ID"].isna().sum(),
+                cls.books_df["Customer ID"].isna().sum(),
         
             "duplicate_records":
-                cls.raw_books_df.duplicated(
+                cls.books_df.duplicated(
                     subset=[
                         "Books",
                         "Book checkout",
@@ -33,12 +33,12 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         
             "date_quotes":
                 (
-                    cls.raw_books_df["Book checkout"]
+                    cls.books_df["Book checkout"]
                     .astype(str)
                     .str.contains('"')
                     .sum()
                     +
-                    cls.raw_books_df["Book Returned"]
+                    cls.books_df["Book Returned"]
                     .astype(str)
                     .str.contains('"')
                     .sum()
@@ -46,10 +46,10 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         
             "leading_trailing_spaces":
                 (
-                    cls.raw_books_df["Days allowed to borrow"]
+                    cls.books_df["Days allowed to borrow"]
                     .astype(str)
                     .ne(
-                        cls.raw_books_df[
+                        cls.books_df[
                             "Days allowed to borrow"
                         ].astype(str).str.strip()
                     )
@@ -60,25 +60,25 @@ class TestLibraryBooksCleaning(unittest.TestCase):
         cls.customer_dq_before = {
 
             "blank_rows":
-                cls.raw_customers_df.isna().all(axis=1).sum(),
+                cls.customers_df.isna().all(axis=1).sum(),
         
             "missing_customer_ids":
-                cls.raw_customers_df["Customer ID"].isna().sum(),
+                cls.customers_df["Customer ID"].isna().sum(),
         
             "missing_customer_names":
-                cls.raw_customers_df["Customer Name"].isna().sum(),
+                cls.customers_df["Customer Name"].isna().sum(),
         
             "duplicate_customer_ids":
-                cls.raw_customers_df.duplicated(
+                cls.customers_df.duplicated(
                     subset=["Customer ID"]
                 ).sum(),
         
             "names_with_whitespace":
                 (
-                    cls.raw_customers_df["Customer Name"]
+                    cls.customers_df["Customer Name"]
                     .fillna("")
                     .ne(
-                        cls.raw_customers_df[
+                        cls.customers_df[
                             "Customer Name"
                         ].fillna("").str.strip()
                     )
@@ -189,79 +189,79 @@ class TestLibraryBooksCleaning(unittest.TestCase):
 
         cls.book_dq_after = {
 
-        "blank_rows":
-            cls.books_df.isna().all(axis=1).sum(),
+            "blank_rows":
+                cls.books_df.isna().all(axis=1).sum(),
+        
+            "missing_books":
+                cls.books_df["Books"].isna().sum(),
+        
+            "missing_customer_ids":
+                cls.books_df["Customer ID"].isna().sum(),
+        
+            "duplicate_records":
+                cls.books_df.duplicated(
+                    subset=[
+                        "Books",
+                        "Book checkout",
+                        "Book Returned",
+                        "Customer ID"
+                    ]
+                ).sum(),
     
-        "missing_books":
-            cls.books_df["Books"].isna().sum(),
-    
-        "missing_customer_ids":
-            cls.books_df["Customer ID"].isna().sum(),
-    
-        "duplicate_records":
-            cls.books_df.duplicated(
-                subset=[
-                    "Books",
-                    "Book checkout",
-                    "Book Returned",
-                    "Customer ID"
-                ]
-            ).sum(),
-    
-        "date_quotes":
-            (
-                cls.books_df["Book checkout"]
-                .astype(str)
-                .str.contains('"')
-                .sum()
-                +
-                cls.books_df["Book Returned"]
-                .astype(str)
-                .str.contains('"')
-                .sum()
-            ),
-    
-        "leading_trailing_spaces":
-            (
-                cls.books_df["Days allowed to borrow"]
-                .astype(str)
-                .ne(
-                    cls.books_df[
-                        "Days allowed to borrow"
-                    ].astype(str).str.strip()
+            "date_quotes":
+                (
+                    cls.books_df["Book checkout"]
+                    .astype(str)
+                    .str.contains('"')
+                    .sum()
+                    +
+                    cls.books_df["Book Returned"]
+                    .astype(str)
+                    .str.contains('"')
+                    .sum()
+                ),
+        
+            "leading_trailing_spaces":
+                (
+                    cls.books_df["Days allowed to borrow"]
+                    .astype(str)
+                    .ne(
+                        cls.books_df[
+                            "Days allowed to borrow"
+                        ].astype(str).str.strip()
+                    )
+                    .sum()
                 )
-                .sum()
-            )
-    }
+        }
 
-    cls.customer_dq_after = {
+        cls.customer_dq_after = {
 
-        "blank_rows":
-            cls.customers_df.isna().all(axis=1).sum(),
-    
-        "missing_customer_ids":
-            cls.customers_df["Customer ID"].isna().sum(),
-    
-        "missing_customer_names":
-            cls.customers_df["Customer Name"].isna().sum(),
-    
-        "duplicate_customer_ids":
-            cls.customers_df.duplicated(
-                subset=["Customer ID"]
-            ).sum(),
-    
-        "names_with_whitespace":
-            (
-                cls.customers_df["Customer Name"]
-                .fillna("")
-                .ne(
-                    cls.customers_df[
-                        "Customer Name"
-                    ].fillna("").str.strip()
+            "blank_rows":
+                cls.customers_df.isna().all(axis=1).sum(),
+        
+            "missing_customer_ids":
+                cls.customers_df["Customer ID"].isna().sum(),
+        
+            "missing_customer_names":
+                cls.customers_df["Customer Name"].isna().sum(),
+        
+            "duplicate_customer_ids":
+                cls.customers_df.duplicated(
+                    subset=["Customer ID"]
+                ).sum(),
+        
+            "names_with_whitespace":
+                (
+                    cls.customers_df["Customer Name"]
+                    .fillna("")
+                    .ne(
+                        cls.customers_df[
+                            "Customer Name"
+                        ].fillna("").str.strip()
+                    )
+                    .sum()
                 )
-                .sum()
-            )
-    }
+        }
 
     # -----------------------------------------
     # BOOKS TESTS
