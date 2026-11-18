@@ -29,8 +29,8 @@ class TestOperations(unittest.TestCase):
         # ACT & ASSERT
         self.assertEqual(testCalc.get_division(), 4, "The sum is wrong")
 
-    def tearDown(self):
-        pass
+    # def tearDown(self):
+    #     pass
 
 if __name__ = "__main__":
     unittest.main()
