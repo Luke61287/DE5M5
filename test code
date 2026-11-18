@@ -1,0 +1,284 @@
+import unittest
+import pandas as pd
+
+
+class TestLibraryBooksCleaning(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+
+        cls.books_df = pd.read_csv("data/03_Library Systembook.csv")
+        cls.customers_df = pd.read_csv("data/03_Library SystemCustomers.csv")
+
+        # Reproduce notebook cleaning logic
+
+        cls.books_df = cls.books_df.dropna(how="all")
+
+        date_columns = ["Book checkout", "Book Returned"]
+
+        for col in date_columns:
+            cls.books_df[col] = (
+                cls.books_df[col]
+                .astype(str)
+                .str.replace('"', '', regex=False)
+            )
+
+        cls.books_df["Days allowed to borrow"] = (
+            cls.books_df["Days allowed to borrow"]
+            .astype(str)
+            .str.strip()
+        )
+
+        cls.books_df["Book checkout"] = pd.to_datetime(
+            cls.books_df["Book checkout"],
+            dayfirst=True,
+            errors="coerce"
+        )
+
+        cls.books_df["Book Returned"] = pd.to_datetime(
+            cls.books_df["Book Returned"],
+            dayfirst=True,
+            errors="coerce"
+        )
+
+        cls.books_df["Book checkout"] = (
+            cls.books_df["Book checkout"]
+            .apply(
+                lambda x:
+                x.replace(year=2023)
+                if pd.notnull(x) and x.year > 2026
+                else x
+            )
+        )
+
+        cls.books_df = cls.books_df.drop_duplicates(
+            subset=[
+                "Books",
+                "Book checkout",
+                "Book Returned",
+                "Customer ID"
+            ]
+        )
+
+        cls.books_df["Books"] = (
+            cls.books_df["Books"]
+            .fillna("Unknown")
+        )
+
+        cls.books_df["Customer ID"] = (
+            cls.books_df["Customer ID"]
+            .fillna(-1)
+        )
+
+        cls.books_df["Customer ID"] = (
+            pd.to_numeric(
+                cls.books_df["Customer ID"],
+                errors="coerce"
+            )
+            .astype("int64")
+        )
+
+        cls.books_df["Books"] = (
+            cls.books_df["Books"]
+            .str.strip()
+            .str.title()
+        )
+
+        cls.books_df["Borrow_Days"] = (
+            cls.books_df["Book Returned"]
+            - cls.books_df["Book checkout"]
+        ).dt.days
+
+        # Customer dataset cleaning
+
+        cls.customers_df = cls.customers_df.dropna(how="all")
+
+        cls.customers_df["Customer Name"] = (
+            cls.customers_df["Customer Name"]
+            .str.strip()
+            .str.title()
+        )
+
+        cls.customers_df = cls.customers_df[
+            cls.customers_df["Customer ID"].notna()
+        ]
+
+        cls.customers_df["Customer ID"] = (
+            pd.to_numeric(
+                cls.customers_df["Customer ID"],
+                errors="coerce"
+            )
+            .astype("int64")
+        )
+
+    # -----------------------------------------
+    # BOOKS TESTS
+    # -----------------------------------------
+
+    def test_no_completely_blank_rows(self):
+
+        self.assertEqual(
+            self.books_df.isna().all(axis=1).sum(),
+            0
+        )
+
+    def test_quotes_removed_from_dates(self):
+
+        found_quote = (
+            self.books_df
+            .astype(str)
+            [["Book checkout", "Book Returned"]]
+            .apply(lambda x: x.str.contains('"'))
+            .any()
+            .any()
+        )
+
+        self.assertFalse(found_quote)
+
+    def test_dates_are_datetime(self):
+
+        self.assertTrue(
+            pd.api.types.is_datetime64_any_dtype(
+                self.books_df["Book checkout"]
+            )
+        )
+
+        self.assertTrue(
+            pd.api.types.is_datetime64_any_dtype(
+                self.books_df["Book Returned"]
+            )
+        )
+
+    def test_future_year_typo_fixed(self):
+
+        future_records = self.books_df[
+            self.books_df["Book checkout"].dt.year > 2026
+        ]
+
+        self.assertEqual(len(future_records), 0)
+
+    def test_duplicate_records_removed(self):
+
+        duplicates = self.books_df.duplicated(
+            subset=[
+                "Books",
+                "Book checkout",
+                "Book Returned",
+                "Customer ID"
+            ]
+        ).sum()
+
+        self.assertEqual(duplicates, 0)
+
+    def test_missing_book_names_handled(self):
+
+        missing_books = self.books_df["Books"].isna().sum()
+
+        self.assertEqual(missing_books, 0)
+
+    def test_unknown_book_exists(self):
+
+        self.assertIn(
+            "Unknown",
+            self.books_df["Books"].values
+        )
+
+    def test_customer_ids_are_integers(self):
+
+        self.assertTrue(
+            pd.api.types.is_integer_dtype(
+                self.books_df["Customer ID"]
+            )
+        )
+
+    def test_missing_customer_id_replaced(self):
+
+        self.assertIn(
+            -1,
+            self.books_df["Customer ID"].values
+        )
+
+    def test_invalid_checkout_date_detected(self):
+
+        invalid_dates = (
+            self.books_df["Book checkout"]
+            .isna()
+            .sum()
+        )
+
+        self.assertGreaterEqual(invalid_dates, 1)
+
+    def test_records_returned_before_checkout_found(self):
+
+        bad_dates = self.books_df[
+            self.books_df["Book Returned"]
+            < self.books_df["Book checkout"]
+        ]
+
+        self.assertGreater(len(bad_dates), 0)
+
+    def test_borrow_period_violations_found(self):
+
+        violations = self.books_df[
+            self.books_df["Borrow_Days"] > 14
+        ]
+
+        self.assertGreater(len(violations), 0)
+
+    # -----------------------------------------
+    # CUSTOMER TESTS
+    # -----------------------------------------
+
+    def test_customer_table_has_no_blank_rows(self):
+
+        self.assertEqual(
+            self.customers_df.isna().all(axis=1).sum(),
+            0
+        )
+
+    def test_customer_id_has_no_nulls(self):
+
+        self.assertEqual(
+            self.customers_df["Customer ID"].isna().sum(),
+            0
+        )
+
+    def test_customer_ids_are_integers(self):
+
+        self.assertTrue(
+            pd.api.types.is_integer_dtype(
+                self.customers_df["Customer ID"]
+            )
+        )
+
+    def test_customer_names_trimmed(self):
+
+        whitespace_found = (
+            self.customers_df["Customer Name"]
+            !=
+            self.customers_df["Customer Name"].str.strip()
+        ).any()
+
+        self.assertFalse(whitespace_found)
+
+    def test_customer_names_standardised(self):
+
+        title_case_check = (
+            self.customers_df["Customer Name"]
+            ==
+            self.customers_df["Customer Name"].str.title()
+        ).all()
+
+        self.assertTrue(title_case_check)
+
+    def test_no_duplicate_customer_ids(self):
+
+        duplicates = self.customers_df.duplicated(
+            subset=["Customer ID"]
+        ).sum()
+
+        self.assertEqual(duplicates, 0)
+
+
+if __name__ == "__main__":
+    unittest.main()
