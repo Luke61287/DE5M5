@@ -1,4 +1,4 @@
-Class Calculator:
+class Calculator:
     def __init__(self, a, b):
         self.a = a
         self.b = b
@@ -21,6 +21,6 @@ Class Calculator:
         ans = (self.a + self.b) * self.luke + 100
         return ans
 
-if __name__ = "__main__":
-    myCalc = Calculator(a=5, b=6)
-    print(myCalc.get_sum())
+if __name__ == "__main__":
+    myCalc = Calculator(a=247, b=12)
+    print(myCalc.get_division())
